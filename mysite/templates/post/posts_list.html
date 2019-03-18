@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}
+文章列表
+{% endblock %}
+{% block content %}
+{% for post in posts %}
+<p><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></p>
+{% endfor %}
+{% endblock %}
+</body>
+</html>
