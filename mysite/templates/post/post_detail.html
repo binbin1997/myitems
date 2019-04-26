@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
+{% load post_tags %}
 {% block content %}
     <div class="row-fluid">
         <div class="span9">
             <h4>{{ object.title }}</h4>
             <small>作者：{{ object.profile.user }} 发布日期：{{ object.publish |date:'Y-m-d' }}</small>
             <hr>
-            <p>{{ object.body }}</p>
+{#            <p>{{ object.body }}</p>#}
+         <p>{{ object.body|markdown }}</p>
             <hr>
             <h4>文章评论：</h4>
             {% for comment in object.post_comments.all %}
@@ -29,8 +31,9 @@
 {% endblock %}
 
 {% block script %}
-<script>
+{#<script>#}
     $(document).ready(function () {
+    $('table').addClass("table");     {# 修饰表格 #}
         $(':button').click(function () {
             data = {
                 'id' : {{ object.id }},
@@ -45,6 +48,6 @@
             })
         });
     });
-</script>
+{#</script>#}
 {% endblock %}
 

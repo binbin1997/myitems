@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .forms import UserEditForm, ProfileEditForm,CommentForm
+from .forms import UserEditForm, ProfileEditForm, CommentForm
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.views.generic.edit import FormMixin,ModelFormMixin
+from django.views.generic.edit import FormMixin, ModelFormMixin
 from .models import Profile, Contact, Category, Comment, Post
 from django.urls import reverse_lazy
 from django.http import JsonResponse
@@ -13,10 +13,18 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.db.models import Count
 
+"""
+主页
+显示了分类
+显示了所有文章 进行了切片
+显示热门文章 进行了切片 
+
+"""
+
 
 def index(request):
     categorys = Category.objects.all()
-    posts= Post.objects.all().filter(status__gt=0)[:10]
+    posts = Post.objects.all().filter(status__gt=0)[:10]
     post_hot = Post.objects.filter(status=2)[:5]
     post_pop = Post.objects.filter(status=3)
     real_hot = Post.objects.filter(status=1).order_by('-clicks')[:5]
@@ -30,12 +38,15 @@ def index(request):
                   })
 
 
+# 静态方法控制登录的 如果你没有登录 必须登录
 @login_required
+# 进入个人详情页
 def dashboard(request):
     profile = get_object_or_404(Profile, user=request.user)
     return render(request, 'account/dashboard.html', {'profile': profile})
 
 
+# 注册
 def register(request):
     if request.method == "POST":
         form = UserCreationForm(data=request.POST)
@@ -53,6 +64,13 @@ def register(request):
         return render(request, 'account/register.html', {'form': form})
 
 
+"""
+
+更改个人的用户信息
+
+"""
+
+
 @login_required
 def profileedit(request):
     if request.method == "POST":
@@ -67,6 +85,11 @@ def profileedit(request):
         user_form = UserEditForm(instance=request.user)
         profile_form = ProfileEditForm(instance=request.user.profile)
     return render(request, 'account/pro_edit.html', {'user_form': user_form, 'profile_form': profile_form})
+
+
+"""
+详情页 类试图
+"""
 
 
 class ProfileList(ListView):
@@ -88,7 +111,9 @@ class ProfileDetail(DetailView):
     template_name = 'follow/profile_detail.html'
 
 
+# 只用post方式获取
 @require_POST
+# 喜欢关注功能
 def user_like(request):
     fromid = request.POST.get('fromid')
     toid = request.POST.get('toid')
@@ -121,14 +146,20 @@ def user_chk(request):
     })
 
 
-def catposts(request,id):
+def catposts(request, id):
     cat = Category.objects.get(id=id)
     posts = cat.cat_posts.all()
-    return render(request,'post/posts_list.html',{'posts':posts})
+    return render(request, 'post/posts_list.html', {'posts': posts})
+
+
+"""
+类视图 新建文章
+"""
+
 
 class PostCreate(CreateView):
     model = Post
-    fields = ('title','category','body','status')
+    fields = ('title', 'category', 'body', 'status')
     template_name = 'post/post_create.html'
     success_url = reverse_lazy('dashboard')
 
@@ -137,10 +168,15 @@ class PostCreate(CreateView):
         form.instance.publish = timezone.now()
         return super().form_valid(form)
 
-class PostDetail(FormMixin,DetailView):
+
+# 类视图文章详情页
+
+
+class PostDetail(FormMixin, DetailView):
     model = Post
     template_name = 'post/post_detail.html'
     form_class = CommentForm
+
 
 @require_POST
 def post_comment(request):
@@ -150,7 +186,7 @@ def post_comment(request):
         try:
             user = request.user
             post = Post.objects.get(id=id)
-            Comment.objects.create(user=user, post=post,body=body)
+            Comment.objects.create(user=user, post=post, body=body)
             return JsonResponse({'status': 'ok'})
         except:
             pass
